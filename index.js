@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const User = require("./models/User");
-const app = express();
+// const app = express();
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
@@ -17,6 +17,8 @@ dotenv.config();
 mongoose.connect(process.env.MONGO);
 const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
+
+const app = express().use("*", cors());
 
 // Listen to port 4001;
 app.use(express.json());
