@@ -33,8 +33,8 @@ app.use(
     credentials: true,
     origin: [
       process.env.CLIENT_URL,
-      "https://port-0-node-express-jvpb2mloesnlp2.sel5.cloudtype.app/",
-      "http://localhost:3000/",
+      "https://port-0-node-express-jvpb2mloesnlp2.sel5.cloudtype.app",
+      "http://localhost:3000",
     ],
   })
 );
