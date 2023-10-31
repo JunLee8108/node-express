@@ -29,8 +29,15 @@ app.listen(3001);
 
 app.use(
   cors({
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
     credentials: true,
-    origin: process.env.CLIENT_URL,
+    origin: [
+      process.env.CLIENT_URL,
+      "https://port-0-node-express-jvpb2mloesnlp2.sel5.cloudtype.app/",
+      "http://localhost:3000/",
+    ],
   })
 );
 
