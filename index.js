@@ -83,7 +83,6 @@ app.post("/register", async (req, res) => {
       },
     });
 
-    // Send a verification email
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -130,17 +129,25 @@ app.get("/verify-email/:token", async (req, res) => {
   }
 });
 
-// Login
+// LOGIN
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const foundUser = await User.findOne({ email });
 
   if (!foundUser) {
-    return res.send({ message: "User doesn't exist" });
+    return res.send({ status: "error", message: "User doesn't exist." });
   }
 
   if (foundUser) {
+    if (!foundUser.isVerified) {
+      return res.send({
+        status: "error",
+        message: "Please verify your account first.",
+      });
+    }
+
     const passOk = bcrypt.compareSync(password, foundUser.password);
+
     if (passOk) {
       jwt.sign(
         { userId: foundUser._id, email },
@@ -148,21 +155,52 @@ app.post("/login", async (req, res) => {
         {},
         (err, token) => {
           res.cookie("token", token).json({
-            id: foundUser._id,
-            firstName: foundUser.firstname,
-            lastName: foundUser.lastname,
-            email: email,
-            loggedIn: true,
+            token: token,
           });
         }
       );
     } else {
-      return res.send({ message: "Invalid password" });
+      return res.send({
+        status: "error",
+        message: "Invalid password.",
+      });
     }
   }
 });
 
-// Forgot password
+app.post("/login-verification", async (req, res) => {
+  const data = req.body;
+
+  try {
+    const decoded = jwt.verify(data.token, process.env.JWT_SECRET);
+
+    const email = decoded.email;
+
+    const existingUser = await User.findOne({ email });
+
+    if (!existingUser) {
+      return res.status(400).json({
+        status: "error",
+        message: "user doesn't exist.",
+      });
+    }
+
+    res.status(200).send({
+      status: "success",
+      message: "Successfully Loged in.",
+      firstname: existingUser.firstname,
+      lastname: existingUser.lastname,
+      email: existingUser.email,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      status: "error",
+      message: "token is not valid.",
+    });
+  }
+});
+
+// FORGOT PASSWORD
 app.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
   const existingUser = await User.findOne({ email });
@@ -195,7 +233,6 @@ app.post("/forgot-password", async (req, res) => {
     },
   });
 
-  // Send a verification email
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
@@ -218,6 +255,7 @@ app.post("/forgot-password", async (req, res) => {
   });
 });
 
+// FORGOT PASSWORD - RESET
 app.get("/reset-password/:token", async (req, res) => {
   try {
     const { userId } = jwt.verify(req.params.token, jwtSecret);
