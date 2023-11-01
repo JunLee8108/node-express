@@ -33,6 +33,7 @@ app.use(
     credentials: true,
     origin: [
       process.env.CLIENT_URL,
+      // TODO
       "https://port-0-node-express-jvpb2mloesnlp2.sel5.cloudtype.app",
       "http://localhost:3000",
     ],
@@ -44,14 +45,16 @@ app.get("/test2", (req, res) => {
   res.json("test ok");
 });
 
-// Register
+// REGISTER
 app.post("/register", async (req, res) => {
   const { firstname, lastname, email, password } = req.body;
 
-  // Duplicate check
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return res.send({ message: "Username already exists" });
+    return res.status(400).json({
+      status: "error",
+      message: "Username already exists",
+    });
   }
 
   const hashedPassword = bcrypt.hashSync(password);
@@ -66,7 +69,6 @@ app.post("/register", async (req, res) => {
   try {
     jwt.sign({ userId: createdUser._id }, jwtSecret, (err, token) => {
       if (err) throw err;
-      // res.cookie("token", token).status(201).json("ok");
     });
 
     const verificationToken = jwt.sign({ userId: createdUser._id }, jwtSecret, {
@@ -98,9 +100,15 @@ app.post("/register", async (req, res) => {
       }
     });
 
-    res.status(201).json("ok");
+    res.status(200).send({
+      status: "success",
+      message: "We just sent an email to you, so please check your email.",
+    });
   } catch (err) {
-    if (err) throw err;
+    return res.status(400).json({
+      status: "error",
+      message: "Failed to send a verfication email to you",
+    });
   }
 });
 
